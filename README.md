@@ -6,11 +6,11 @@ gps-tracking-from-array.py is a simple program that imports all of the various d
 
 In order to use gps-tracking-from-array.py, you should change:
 
-- the [array of GPS coordinates](https://github.com/chris-viam/compass-control/blob/437d096799c35394b0fcf4662268a316d8269c72/gps-tracking-from-array.py#L21-L30) to your desired coordinates
-- the [credentials for connecting to your robot](https://github.com/chris-viam/compass-control/blob/437d096799c35394b0fcf4662268a316d8269c72/gps-tracking-from-array.py#L37-L38)
-- the [name](https://github.com/chris-viam/compass-control/blob/437d096799c35394b0fcf4662268a316d8269c72/gps-tracking-from-array.py#L50) of the movement sensor that supports GetCompassHeading
-- the [name](https://github.com/chris-viam/compass-control/blob/437d096799c35394b0fcf4662268a316d8269c72/gps-tracking-from-array.py#L53) of the movement sensor that supports GetPosition
-- the [names](https://github.com/chris-viam/compass-control/blob/437d096799c35394b0fcf4662268a316d8269c72/boxbot.py#L10-L13) of the motors
+- the [array of GPS coordinates](https://github.com/chris-viam/compass-control/blob/9a53e544d54e66240df3f3d14e050433562ddc98/gps-tracking-from-array.py#L21) to your desired coordinates
+- the [credentials for connecting to your robot](https://github.com/chris-viam/compass-control/blob/9a53e544d54e66240df3f3d14e050433562ddc98/gps-tracking-from-array.py#L38-L43)
+- the [name](https://github.com/chris-viam/compass-control/blob/9a53e544d54e66240df3f3d14e050433562ddc98/gps-tracking-from-array.py#L50) of the movement sensor that supports GetCompassHeading
+- the [name](https://github.com/chris-viam/compass-control/blob/9a53e544d54e66240df3f3d14e050433562ddc98/gps-tracking-from-array.py#L53) of the movement sensor that supports GetPosition
+- the [names](https://github.com/chris-viam/compass-control/blob/9a53e544d54e66240df3f3d14e050433562ddc98/boxbot.py#L14-L17) of the motors
 
 This code will need to be modified significantly for other types of base (i.e Ackermann steering).
 
