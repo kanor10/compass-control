@@ -6,8 +6,6 @@ import os
 from boxbot import BoxBot
 from boxbot import PIDController
 from viam.robot.client import RobotClient
-from viam.rpc.dial import Credentials, DialOptions
-from viam.components.motor import Motor
 from viam.components.movement_sensor import MovementSensor
 
 # PID parameters
@@ -20,14 +18,11 @@ integral_max = 400  # Adjust as needed
 integral_min = -400  # Adjust as needed
 
 GPSarray = [
-    [40.770624, -73.978119],
-    [40.770541, -73.978177],
-    [40.770617,-73.978149],
-    [40.770542,-73.978209],
-    [40.770629,-73.978168],
-    [40.770550,-73.978221],
-    [40.770630, -73.978180],
-    [40.770552,-73.978241]
+    [42.32902, -83.07572],
+    [42.32918, -83.07581],
+    [42.32913,-83.07605],
+    [42.32899,-83.07596],
+    [42.32902,-83.0757]
     ]    
 
 
@@ -45,11 +40,9 @@ async def connect():
     )
     return await RobotClient.at_address(host, opts)
 
-  
-
 async def main():
     robot = await connect()
-    xsens = MovementSensor.from_robot(robot, "xsens")
+    xsens = MovementSensor.from_robot(robot, "gps")
     pid = PIDController(kp, ki, kd, integral_max, integral_min)
     boxbot = BoxBot(robot)
     gps = MovementSensor.from_robot(robot, "gps")    

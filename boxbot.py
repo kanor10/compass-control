@@ -3,7 +3,7 @@ import time
 import math
 import random
 from viam.components.motor import Motor
-from viam.robot.client import RobotClient
+from viam.components.base import Base, Vector3
 
 class BoxBot:
     """
@@ -11,10 +11,7 @@ class BoxBot:
     functions for GPS waypoint navigation of a robot using a compass.
     """
     def __init__(self, robot):
-        self.left_front = Motor.from_robot(robot, "left-front")
-        self.left_rear = Motor.from_robot(robot, "left-rear")
-        self.right_front = Motor.from_robot(robot, "right-front")
-        self.right_rear = Motor.from_robot(robot, "right-rear")
+        self.base = Base.from_robot(robot,"intermode-base")
 
     async def drive(self, power_drive, power_spin):
         """
@@ -25,10 +22,9 @@ class BoxBot:
         left_power = power_drive + power_spin
         right_power = power_drive - power_spin
 
-        await self.left_front.set_power(left_power)
-        await self.left_rear.set_power(left_power)
-        await self.right_front.set_power(right_power)
-        await self.right_rear.set_power(right_power)
+        linearVec = Vector3(x=0.0, y=power_drive, z=0.0)
+        angularVec = Vector3(x=0.0, y=0.0, z=-1*power_spin)
+        await self.base.set_power(left_power, right_power)
 
     async def setheading(self, boxbot, pid, xsens, gps, latD, longD):
         """
@@ -142,7 +138,7 @@ class BoxBot:
 
             #calculate the control output for heading compensation and set forward power to 80%
             control_output = pid.calculate(desired_heading, actual_heading)
-            await boxbot.drive(0.8,control_output)
+            await boxbot.drive(0.3,control_output)
 
             if distance<0.0008:
                 print("here")
