@@ -2,6 +2,7 @@ import asyncio
 import time
 import math
 import csv
+import os
 from boxbot import BoxBot
 from boxbot import PIDController
 from viam.robot.client import RobotClient
@@ -33,19 +34,20 @@ GPSarray = [
 data=[]
 
 async def connect():
-    creds = Credentials(
-        type='robot-location-secret',
-        payload='REDACTED')
-    opts = RobotClient.Options(
-        refresh_interval=0,
-        dial_options=DialOptions(credentials=creds)
+    api_key = os.environ.get('ENV_API_KEY')
+    api_key_id = os.environ.get('ENV_API_KEY_ID')
+    host = os.environ.get('ENV_HOST')
+    
+    opts = RobotClient.Options.with_api_key(
+        api_key=api_key,
+        api_key_id=api_key_id,
+        refresh_interval=0
     )
-    return await RobotClient.at_address('REDACTED', opts)
+    return await RobotClient.at_address(host, opts)
 
   
 
 async def main():
-
     robot = await connect()
     xsens = MovementSensor.from_robot(robot, "xsens")
     pid = PIDController(kp, ki, kd, integral_max, integral_min)
