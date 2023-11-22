@@ -23,7 +23,8 @@ class BoxBot:
         linearVec = Vector3(x=0.0, y=power_drive, z=0.0)
 
         if not (power_spin == 0):
-            angularVec = Vector3(x=0.3, y=0.0, z=-1*power_spin)
+            linearVec = Vector3(x=0.3, y=power_drive, z=0.0)
+            angularVec = Vector3(x=0, y=0.0, z=-1*power_spin)
         else:
             angularVec = Vector3(x=0.0, y=0.0, z=0.0)
 
