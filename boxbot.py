@@ -131,7 +131,7 @@ class BoxBot:
 
 
             # Read in heading
-            raw_heading = await xsens.get_compass_heading()-15
+            raw_heading = await xsens.get_compass_heading()
             # Adjust heading to be within the desired range (0-360 degrees)
             actual_heading = (raw_heading) % 360
 
