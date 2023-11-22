@@ -2,7 +2,7 @@ import time
 import math
 from viam.components.base import Base, Vector3
 
-LOOP_PERIOD = 0.1  # seconds
+LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
 LINEAR_COMMAND = 0.3  # fractional power
 
