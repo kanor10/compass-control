@@ -74,7 +74,7 @@ class BoxBot:
             if abs(actual_heading-desired_heading) < 5:
                 break
 
-            time.sleep(min(start_time + LOOP_PERIOD - time.time(), 0))
+            time.sleep(max(start_time + LOOP_PERIOD - time.time(), 0))
 
 
 
@@ -124,7 +124,7 @@ class BoxBot:
                 print("here")
                 return data
             
-            time.sleep(min(start_time + LOOP_PERIOD - time.time(), 0))
+            time.sleep(max(start_time + LOOP_PERIOD - time.time(), 0))
 
 
     async def calculate_heading_and_distance(self, lat1, lon1, lat2, lon2):
