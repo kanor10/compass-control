@@ -10,9 +10,9 @@ from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
 # PID parameters
-kp = 0.08  # Proportional gain
+kp = 0.0008  # Proportional gain
 ki = 0.002  # Integral gain
-kd = 0.2 # Derivative gain
+kd = 0.002 # Derivative gain
 
 # Integral term saturation limits
 integral_max = 400  # Adjust as needed
