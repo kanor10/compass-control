@@ -5,6 +5,9 @@ from viam.components.base import Base, Vector3
 LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
 LINEAR_COMMAND = 0.3  # fractional power
+LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
+LINEAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum speed
+ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
 
 class BoxBot:
     """
@@ -20,15 +23,20 @@ class BoxBot:
         power_spin will handle rotations. For example (1,0) would be forward full power and (0,1)
         would be spin clockwise.
         """
-        linearVec = Vector3(x=0.0, y=power_drive, z=0.0)
+        angular_command = -1*power_spin # Negative sign to make clockwise negative
+        angular_percent = abs(angular_command) / ANGULAR_COMMAND_MAX
 
-        if not (power_spin == 0):
-            linearVec = Vector3(x=0.3, y=power_drive, z=0.0)
-            angularVec = Vector3(x=0, y=0.0, z=-1*power_spin)
-        else:
-            angularVec = Vector3(x=0.0, y=0.0, z=0.0)
+        # Hack to enforce a minimum turn radius
+        linear_command = max(LINEAR_COMMAND_MINTURN*angular_percent, power_drive)
 
-        print(f"Linear: {power_drive}, Angular: {-1*power_spin}")
+        # Limit both commands to the range of -max to max
+        linear_command = max(min(linear_command, LINEAR_COMMAND_MAX), -LINEAR_COMMAND_MAX)
+        angular_command = max(min(angular_command, ANGULAR_COMMAND_MAX), -ANGULAR_COMMAND_MAX)
+        
+        print(f"Linear: {linear_command}, Angular: {angular_command}")
+
+        linearVec = Vector3(x=0.0, y=linear_command, z=0.0)
+        angularVec = Vector3(x=0.0, y=0.0, z=angular_command)
         await self.base.set_power(linearVec, angularVec)
 
     async def setheading(self, boxbot, pid, xsens, gps, latD, longD):
