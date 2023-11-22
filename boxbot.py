@@ -1,9 +1,10 @@
-import asyncio
 import time
 import math
-import random
-from viam.components.motor import Motor
 from viam.components.base import Base, Vector3
+
+LOOP_PERIOD = 0.1  # seconds
+PRINT_PERIOD = 1  # seconds
+LINEAR_COMMAND = 0.3  # fractional power
 
 class BoxBot:
     """
@@ -37,12 +38,10 @@ class BoxBot:
         is broken. There is some commented out logic that will give some additional settling time
         if needed - although this is not neccessary.
         """
-        reached_desired_heading = False
-        #start_time = 0  # Initialize the timer
-
-        start_time = time.time()  # Initialize the timer
 
         while True:
+            start_time = time.time()
+
             # Read in heading
             raw_heading = await xsens.get_compass_heading()
             # Adjust heading to be within the desired range (0-360 degrees)
@@ -54,10 +53,9 @@ class BoxBot:
 
             print(f"Coordinates: {latitude}, {longitude}, {actual_heading}")
 
-
             #get heading and distance to target 2
             heading_distance = await boxbot.calculate_heading_and_distance(latitude, longitude, latD, longD)
-            desired_heading, distance = heading_distance
+            desired_heading, _ = heading_distance
 
             # Angle wraparound logic
             if abs(desired_heading - actual_heading) > 180:
@@ -68,29 +66,14 @@ class BoxBot:
 
             #calculate the control output
             control_output = pid.calculate(desired_heading, actual_heading)
-            #print("turning")
 
             await boxbot.drive(0,control_output)  # Use the BoxBot for spinning
 
             # Stop spinning once the desired heading is reached
             if abs(actual_heading-desired_heading) < 5:
                 break
-            #    if not reached_desired_heading:
-            #        reached_desired_heading = True
-            #        start_time = time.time()  # Start the timer when the heading is first reached
 
-            #if reached_desired_heading:
-            #    elapsed_time = time.time() - start_time  # Calculate elapsed time
-
-                # Keep running for 3 seconds after reaching the desired heading
-            #    if elapsed_time <= 3.0:
-            #        pass  # You can add additional actions here
-
-                # After 2 seconds, stop the robot and exit the loop
-            #    if elapsed_time > 3.0:
-            #        await boxbot.drive(0, 0)  # Stop spinning
-            #        print("Desired heading reached.")
-            #        break
+            time.sleep(min(start_time + LOOP_PERIOD - time.time(), 0))
 
 
 
@@ -102,28 +85,18 @@ class BoxBot:
         to have achieved the goal and breaks out of the loop.
         """
         print("going to coord")
-        start_time = time.time()  # Initialize the timer
-        time_increment = 1
 
+        time_next_update = 0
         while True:
-
-
-            #data timing
-
-            current_time = time.time() - start_time
-            time_since_last_increment = current_time % time_increment
-
-            #print(time_since_last_increment)
-
+            start_time = time.time()
 
             coords = await gps.get_position()
             latitude = coords[0].latitude
             longitude = coords[0].longitude
 
-            if time_since_last_increment >= 0.9:
-                    #timestamp = round(current_time,1)
-                    data.append([latitude,longitude])
-                    #print(data)
+            if start_time >= time_next_update:
+                time_next_update = start_time + PRINT_PERIOD
+                data.append([latitude,longitude])
 
             #get heading and distance to target 2
             heading_distance = await boxbot.calculate_heading_and_distance(latitude, longitude, latD, longD)
@@ -142,17 +115,15 @@ class BoxBot:
                 else:
                     desired_heading += 360
 
-            #calculate the control output for heading compensation and set forward power to 80%
+            #calculate the control output for heading compensation and set forward power
             control_output = pid.calculate(desired_heading, actual_heading)
-            await boxbot.drive(0.3,control_output)
+            await boxbot.drive(drive_speed, control_output)
 
             if distance<0.0008:
                 print("here")
-                #can uncomment this to delineate waypoints
-                #data.append([999.9,999.9])
-                #print(data)
                 return data
-                break
+            
+            time.sleep(min(start_time + LOOP_PERIOD - time.time(), 0))
 
 
     async def calculate_heading_and_distance(self, lat1, lon1, lat2, lon2):
@@ -193,20 +164,11 @@ class BoxBot:
         This calls setheading and gotocoord together, such that the robot can be requested to turn
         and go to the correct GPS point.
         """
-        #get current position
-        coords = await gps.get_position()
-        latitude = coords[0].latitude
-        longitude = coords[0].longitude
-
-        #get heading and distance to target
-        heading_distance = await boxbot.calculate_heading_and_distance(latitude, longitude, latD, longD)
-        desired_heading, distance = heading_distance
-
         #face target 1 and settle
         await boxbot.setheading(boxbot, pid, xsens, gps, latD, longD)
 
         #goto target 1 and stop when reached
-        await boxbot.goto_coord(boxbot, pid, xsens, gps, 0.6, latD, longD,data)
+        await boxbot.goto_coord(boxbot, pid, xsens, gps, LINEAR_COMMAND, latD, longD,data)
 
 
 class PIDController:
@@ -237,5 +199,7 @@ class PIDController:
         self.integral = max(min(self.integral, self.integral_max), self.integral_min)
 
         self.previous_error = error
+
+        print(f"P: {self.kp * error}, I: {self.ki * self.integral}, D: {self.kd * (error - self.previous_error)}, Control Output: {control_output}")
 
         return control_output

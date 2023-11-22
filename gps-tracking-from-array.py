@@ -26,9 +26,6 @@ GPSarray = [
     [42.32902,-83.0757]
     ]    
 
-
-data=[]
-
 async def connect():
     # Load environment variables
     load_dotenv()
@@ -48,11 +45,8 @@ async def main():
     xsens = MovementSensor.from_robot(robot, "gps")
     pid = PIDController(kp, ki, kd, integral_max, integral_min)
     boxbot = BoxBot(robot)
-    gps = MovementSensor.from_robot(robot, "gps")    
-
-
-    #while True:
-
+    gps = MovementSensor.from_robot(robot, "gps")
+    data=[] 
 
     for x in GPSarray:
         print('next point: ')
@@ -60,7 +54,6 @@ async def main():
         print(", ")
         print(x[1])
         await boxbot.gotopoint(boxbot,gps,pid,xsens,x[0],x[1],data)
-
 
     print(data)
 
