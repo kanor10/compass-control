@@ -19,12 +19,15 @@ class BoxBot:
         power_spin will handle rotations. For example (1,0) would be forward full power and (0,1)
         would be spin clockwise.
         """
-        left_power = power_drive + power_spin
-        right_power = power_drive - power_spin
-
         linearVec = Vector3(x=0.0, y=power_drive, z=0.0)
-        angularVec = Vector3(x=0.0, y=0.0, z=-1*power_spin)
-        await self.base.set_power(left_power, right_power)
+
+        if not (power_spin == 0):
+            angularVec = Vector3(x=0.3, y=0.0, z=-1*power_spin)
+        else:
+            angularVec = Vector3(x=0.0, y=0.0, z=0.0)
+
+        print(f"Linear: {power_drive}, Angular: {-1*power_spin}")
+        await self.base.set_power(linearVec, angularVec)
 
     async def setheading(self, boxbot, pid, xsens, gps, latD, longD):
         """
@@ -48,6 +51,9 @@ class BoxBot:
             coords = await gps.get_position()
             latitude = coords[0].latitude
             longitude = coords[0].longitude
+
+            print(f"Coordinates: {latitude}, {longitude}, {actual_heading}")
+
 
             #get heading and distance to target 2
             heading_distance = await boxbot.calculate_heading_and_distance(latitude, longitude, latD, longD)

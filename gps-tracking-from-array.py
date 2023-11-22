@@ -3,6 +3,7 @@ import time
 import math
 import csv
 import os
+from dotenv import load_dotenv
 from boxbot import BoxBot
 from boxbot import PIDController
 from viam.robot.client import RobotClient
@@ -29,14 +30,16 @@ GPSarray = [
 data=[]
 
 async def connect():
+    # Load environment variables
+    load_dotenv()
+    
     api_key = os.environ.get('ENV_API_KEY')
     api_key_id = os.environ.get('ENV_API_KEY_ID')
     host = os.environ.get('ENV_HOST')
     
     opts = RobotClient.Options.with_api_key(
         api_key=api_key,
-        api_key_id=api_key_id,
-        refresh_interval=0
+        api_key_id=api_key_id
     )
     return await RobotClient.at_address(host, opts)
 
