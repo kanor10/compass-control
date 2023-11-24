@@ -8,15 +8,15 @@ HEADING_TOLERANCE = 5  # degrees
 LINEAR_COMMAND = 0.3  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
 LINEAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum speed
-ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
+ANGULAR_COMMAND_MAX = 0.2  # fractional power to enforce maximum spin speed
 
 class BoxBot:
     """
     A **BoxBot** class (for a four wheeled, differential steering robot) which contains the main
     functions for GPS waypoint navigation of a robot using a compass.
     """
-    # def __init__(self, robot):
-    #     self.base = Base.from_robot(robot,"intermode-base")
+    def __init__(self, robot):
+        self.base = Base.from_robot(robot,"intermode-base")
 
     async def drive(self, power_drive, power_spin):
         """
@@ -24,11 +24,12 @@ class BoxBot:
         power_spin will handle rotations. For example (1,0) would be forward full power and (0,1)
         would be spin clockwise.
         """
+        linear_command = power_drive
         angular_command = -1*power_spin # Negative sign to make clockwise negative
         angular_percent = abs(angular_command) / ANGULAR_COMMAND_MAX
 
         # Hack to enforce a minimum turn radius
-        linear_command = max(LINEAR_COMMAND_MINTURN*angular_percent, power_drive)
+        linear_command = max(LINEAR_COMMAND_MINTURN*angular_percent, linear_command)
 
         # Limit both commands to the range of -max to max
         linear_command = max(min(linear_command, LINEAR_COMMAND_MAX), -LINEAR_COMMAND_MAX)
@@ -40,8 +41,10 @@ class BoxBot:
         angularVec = Vector3(x=0.0, y=0.0, z=angular_command)
         await self.base.set_power(linearVec, angularVec)
 
-    async def setheading(self, pid):
-    # async def setheading(self, boxbot, pid, xsens, gps, latD, longD):
+#################
+    # async def setheading(self, pid):
+#################
+    async def setheading(self, boxbot, pid, xsens, gps, latD, longD):
         """
         This method is used to enter a control loop and turn the robot (this is implementation uses
         differential steering). This loop will run so that the heading error is constantly being
@@ -58,28 +61,32 @@ class BoxBot:
         while True:
             start_time = time.time()
 
-            # # Read in heading
-            # raw_heading = await xsens.get_compass_heading()
-            # # Adjust heading to be within the desired range (0-360 degrees)
-            # actual_heading = (raw_heading) % 360
+            # Read in heading
+            raw_heading = await xsens.get_compass_heading()
+            # Adjust heading to be within the desired range (0-360 degrees)
+            actual_heading = (raw_heading) % 360
 
-            # coords = await gps.get_position()
-            # latitude = coords[0].latitude
-            # longitude = coords[0].longitude
+            coords = await gps.get_position()
+            latitude = coords[0].latitude
+            longitude = coords[0].longitude
 
-            # print(f"Coordinates: {latitude}, {longitude}, {actual_heading}")
+            print(f"Coordinates: {latitude}, {longitude}, {actual_heading}")
 
-            # # get heading and distance to target 2
-            # heading_distance = await boxbot.calculate_heading_and_distance(latitude, longitude, latD, longD)
-            # desired_heading, _ = heading_distance
-            desired_heading = TARGET_HEADING
-            actual_heading = actual_heading_global
-            if last_time != 0:
-                actual_heading = actual_heading_global + control_output *(start_time-last_time) * MAX_ANGULAR_VELOCITY
-                actual_heading_global = actual_heading
-            last_time = start_time
+            # get heading and distance to target 2
+            heading_distance = await boxbot.calculate_heading_and_distance(latitude, longitude, latD, longD)
+            desired_heading, _ = heading_distance
 
-            print(f"Actual: {actual_heading_global:07.3f}, Target: {TARGET_HEADING:07.3f}, Command: {control_output:07.3f}")
+#################
+            # desired_heading = TARGET_HEADING
+            # actual_heading = actual_heading_global
+            # if last_time != 0:
+            #     actual_heading = actual_heading_global + control_output *(start_time-last_time) * MAX_ANGULAR_VELOCITY
+            #     actual_heading_global = actual_heading
+            # last_time = start_time
+
+            # print(f"Actual: {actual_heading_global:07.3f}, Target: {TARGET_HEADING:07.3f}, Command: {control_output:07.3f}")
+#################
+            print(f"Actual: {actual_heading:07.3f}, Target: {desired_heading:07.3f}, Command: {control_output:07.3f}")
 
             # Angle wraparound logic
             if abs(desired_heading - actual_heading) > 180:
@@ -91,10 +98,9 @@ class BoxBot:
             #calculate the control output
             control_output = pid.calculate(desired_heading, actual_heading)
 
-#######################
-            # await boxbot.drive(0,control_output)  # Use the BoxBot for spinning
             control_output = max(min(control_output, ANGULAR_COMMAND_MAX), -ANGULAR_COMMAND_MAX)
-
+            await boxbot.drive(0,control_output)  # Use the BoxBot for spinning
+            
             # Stop spinning once the desired heading is reached
             if abs(actual_heading-desired_heading) < HEADING_TOLERANCE:
                 print("Target heading reached")
