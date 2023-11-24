@@ -10,9 +10,9 @@ from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
 # PID parameters
-kp = 0.0008  # Proportional gain
-ki = 0.002  # Integral gain
-kd = 0.002 # Derivative gain
+kp = 0.001  # Proportional gain
+ki = 0.001  # Integral gain
+kd = 0.0002 # Derivative gain
 
 # Integral term saturation limits
 integral_max = 400  # Adjust as needed
@@ -41,26 +41,32 @@ async def connect():
     return await RobotClient.at_address(host, opts)
 
 async def main():
-    robot = await connect()
-    xsens = MovementSensor.from_robot(robot, "gps")
-    pid = PIDController(kp, ki, kd, integral_max, integral_min)
-    boxbot = BoxBot(robot)
-    gps = MovementSensor.from_robot(robot, "gps")
-    data=[] 
+    pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
+    boxbot = BoxBot()
+    await boxbot.setheading(pid_angular)
 
-    for x in GPSarray:
-        print('next point: ')
-        print(x[0])
-        print(", ")
-        print(x[1])
-        await boxbot.gotopoint(boxbot,gps,pid,xsens,x[0],x[1],data)
 
-    print(data)
 
-    with open("raster5", 'w', newline='') as csvfile:
-        csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['lat', 'long'])
-        csv_writer.writerows(data)
+    # robot = await connect()
+    # xsens = MovementSensor.from_robot(robot, "gps")
+    # pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
+    # boxbot = BoxBot(robot)
+    # gps = MovementSensor.from_robot(robot, "gps")
+    # data=[] 
+
+    # for x in GPSarray:
+    #     print('next point: ')
+    #     print(x[0])
+    #     print(", ")
+    #     print(x[1])
+    #     await boxbot.gotopoint(boxbot,gps,pid_angular,xsens,x[0],x[1],data)
+
+    # print(data)
+
+    # with open("raster5", 'w', newline='') as csvfile:
+    #     csv_writer = csv.writer(csvfile)
+    #     csv_writer.writerow(['lat', 'long'])
+    #     csv_writer.writerows(data)
                     
 
 
