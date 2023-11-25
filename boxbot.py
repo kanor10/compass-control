@@ -26,10 +26,6 @@ class BoxBot:
         """
         linear_command = power_drive
         angular_command = -1*power_spin # Negative sign to make clockwise negative
-        angular_percent = abs(angular_command) / ANGULAR_COMMAND_MAX
-
-        # Hack to enforce a minimum turn radius
-        linear_command = max(LINEAR_COMMAND_MINTURN*angular_percent, linear_command)
 
         # Limit both commands to the range of -max to max
         linear_command = max(min(linear_command, LINEAR_COMMAND_MAX), -LINEAR_COMMAND_MAX)
