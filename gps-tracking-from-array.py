@@ -18,14 +18,6 @@ kd = 0.002 # Derivative gain
 integral_max = 150  # Adjust as needed
 integral_min = -150  # Adjust as needed
 
-GPSarray = [
-    [42.3291272, -83.0758211],	
-    [42.3292649, -83.0758828],	
-    [42.3292154, -83.0760866],	
-    [42.3290796, -83.0760156],	
-    [42.3291272, -83.0758372]
-]    
-
 async def connect():
     # Load environment variables
     load_dotenv()
@@ -40,6 +32,31 @@ async def connect():
     )
     return await RobotClient.at_address(host, opts)
 
+def extract_coordinates_from_csv(file_path):
+    """
+    Reads a CSV file with columns: timestamp, latitude, longitude, altitude.
+    Extracts the latitude and longitude points and returns them in an array
+    where each element is an array containing a pair of coordinates.
+
+    Args:
+    file_path (str): The path to the CSV file.
+
+    Returns:
+    list of lists: A list of [latitude, longitude] pairs.
+    """
+    coordinates = []
+
+    with open(file_path, 'r') as file:
+        csv_reader = csv.reader(file)
+        next(csv_reader)  # Skip the header row
+        for row in csv_reader:
+            if len(row) >= 3:
+                latitude = float(row[1])
+                longitude = float(row[2])
+                coordinates.append([latitude, longitude])
+
+    return coordinates
+
 async def main():
 #################
     # pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
@@ -52,7 +69,10 @@ async def main():
     pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
     boxbot = BoxBot(robot)
     gps = MovementSensor.from_robot(robot, "gps")
-    data=[] 
+    data=[]
+
+    replay_file = os.environ.get('ENV_FILEPATH')
+    GPSarray = extract_coordinates_from_csv(replay_file)
 
     for x in GPSarray:
         print('next point: ')
