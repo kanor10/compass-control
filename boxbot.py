@@ -147,7 +147,7 @@ class BoxBot:
             control_output = pid.calculate(desired_heading, actual_heading)
             await boxbot.drive(drive_speed, control_output)
 
-            if distance<0.0008:
+            if distance<0.001:
                 print("here")
                 return data
             
