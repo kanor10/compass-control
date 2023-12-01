@@ -4,6 +4,7 @@ from viam.components.base import Base, Vector3
 
 LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
+HEADING_OFFEST = -100
 HEADING_TOLERANCE = 5  # degrees
 LINEAR_COMMAND = 0.3  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
@@ -58,7 +59,7 @@ class BoxBot:
             start_time = time.time()
 
             # Read in heading
-            raw_heading = await xsens.get_compass_heading()
+            raw_heading = await xsens.get_compass_heading() + HEADING_OFFEST
             # Adjust heading to be within the desired range (0-360 degrees)
             actual_heading = (raw_heading) % 360
 
@@ -132,7 +133,7 @@ class BoxBot:
             desired_heading, distance = heading_distance
 
             # Read in heading
-            raw_heading = await xsens.get_compass_heading()
+            raw_heading = await xsens.get_compass_heading() + HEADING_OFFEST
             # Adjust heading to be within the desired range (0-360 degrees)
             actual_heading = (raw_heading) % 360
 
