@@ -23,8 +23,14 @@ ki_linear = 0.000  # Integral gain
 kd_linear = 0.000 # Derivative gain
 
 # Integral term saturation limits
-integral_max = 150  # Adjust as needed
-integral_min = -150  # Adjust as needed
+integral_max_heading = 150  # Adjust as needed
+integral_min_heading = -150  # Adjust as needed
+
+integral_max_target = 150  # Adjust as needed
+integral_min_target = -150  # Adjust as needed
+
+integral_max_linear = 150  # Adjust as needed
+integral_min_linear = -150  # Adjust as needed
 
 async def connect():
     # Load environment variables
@@ -74,9 +80,9 @@ async def main():
 
     robot = await connect()
     xsens = MovementSensor.from_robot(robot, "imu")
-    pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max, integral_min)
-    pid_target = PIDController(kp_target, ki_target, kd_target, integral_max, integral_min)
-    pid_linear = PIDController(kp_linear, ki_linear, kd_linear, integral_max, integral_min)
+    pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max_heading, integral_min_heading)
+    pid_target = PIDController(kp_target, ki_target, kd_target, integral_max_target, integral_min_target)
+    pid_linear = PIDController(kp_linear, ki_linear, kd_linear, integral_max_linear, integral_min_linear)
     boxbot = BoxBot(robot)
     gps = MovementSensor.from_robot(robot, "gps")
     data=[]
