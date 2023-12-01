@@ -6,10 +6,10 @@ LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
 HEADING_OFFEST = -100
 HEADING_TOLERANCE = 5  # degrees
-LINEAR_COMMAND = 0.3  # fractional power
+LINEAR_COMMAND = 0.7  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
-LINEAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum speed
-ANGULAR_COMMAND_MAX = 0.2  # fractional power to enforce maximum spin speed
+LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
+ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
 
 class BoxBot:
     """
@@ -150,7 +150,7 @@ class BoxBot:
             control_output = pid.calculate(desired_heading, actual_heading)
             await boxbot.drive(drive_speed, control_output)
 
-            if distance<0.001:
+            if distance<0.002:
                 print("here")
                 return data
             
@@ -201,6 +201,7 @@ class BoxBot:
         #goto target 1 and stop when reached
         await boxbot.goto_coord(boxbot, pid, xsens, gps, LINEAR_COMMAND, latD, longD,data)
 
+        await boxbot.base.stop()
 
 class PIDController:
     """
