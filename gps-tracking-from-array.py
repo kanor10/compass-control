@@ -18,6 +18,10 @@ kp_target = 0.002  # Proportional gain
 ki_target = 0.0005  # Integral gain
 kd_target = 0.001 # Derivative gain
 
+kp_linear = 0.002  # Proportional gain
+ki_linear = 0.000  # Integral gain
+kd_linear = 0.000 # Derivative gain
+
 # Integral term saturation limits
 integral_max = 150  # Adjust as needed
 integral_min = -150  # Adjust as needed
@@ -72,6 +76,7 @@ async def main():
     xsens = MovementSensor.from_robot(robot, "imu")
     pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max, integral_min)
     pid_target = PIDController(kp_target, ki_target, kd_target, integral_max, integral_min)
+    pid_linear = PIDController(kp_linear, ki_linear, kd_linear, integral_max, integral_min)
     boxbot = BoxBot(robot)
     gps = MovementSensor.from_robot(robot, "gps")
     data=[]
@@ -84,7 +89,7 @@ async def main():
         print(x[0])
         print(", ")
         print(x[1])
-        await boxbot.gotopoint(boxbot,gps,pid_heading, pid_target,xsens,x[0],x[1],data)
+        await boxbot.gotopoint(boxbot,gps,pid_heading, pid_target, pid_linear,xsens,x[0],x[1],data)
 
     print(data)
 

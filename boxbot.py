@@ -108,7 +108,7 @@ class BoxBot:
 
 
 
-    async def goto_coord(self, boxbot, pid, xsens, gps, drive_speed,latD,longD,data):
+    async def goto_coord(self, boxbot, pid_angular, pid_linear, xsens, gps,latD,longD,data):
         """
         This method is used to send the robot towards a coordinate using a control loop. It also
         has some data capture functionality which logs the GPS coordinates as the robot drives to a
@@ -148,8 +148,9 @@ class BoxBot:
                     desired_heading += 360
 
             #calculate the control output for heading compensation and set forward power
-            control_output = pid.calculate(desired_heading, actual_heading)
-            await boxbot.drive(drive_speed, control_output)
+            control_output_angular = pid_angular.calculate(desired_heading, actual_heading)
+            control_output_linear = pid_linear.calculate(0, distance)
+            await boxbot.drive(LINEAR_COMMAND, control_output_angular)
 
             if distance < WAYPOINT_TOLERANCE:
                 print("here")
@@ -191,7 +192,7 @@ class BoxBot:
 
         return compass_bearing, distance
 
-    async def gotopoint(self, boxbot,gps,pid_heading, pid_target,xsens,latD,longD,data):
+    async def gotopoint(self, boxbot,gps,pid_heading, pid_target, pid_linear,xsens,latD,longD,data):
         """
         This calls setheading and gotocoord together, such that the robot can be requested to turn
         and go to the correct GPS point.
@@ -200,7 +201,7 @@ class BoxBot:
         await boxbot.setheading(boxbot, pid_heading, xsens, gps, latD, longD)
 
         #goto target 1 and stop when reached
-        await boxbot.goto_coord(boxbot, pid_target, xsens, gps, LINEAR_COMMAND, latD, longD,data)
+        await boxbot.goto_coord(boxbot, pid_target, pid_linear, xsens, gps, latD, longD,data)
 
         await boxbot.base.stop()
 
