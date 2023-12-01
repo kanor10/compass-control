@@ -137,6 +137,8 @@ class BoxBot:
             # Adjust heading to be within the desired range (0-360 degrees)
             actual_heading = (raw_heading) % 360
 
+            print(f"Coordinates: {latitude}, {longitude}, {actual_heading}")
+
             # Angle wraparound logic
             if abs(desired_heading - actual_heading) > 180:
                 if desired_heading > actual_heading:
