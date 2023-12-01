@@ -10,13 +10,13 @@ from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
 # PID parameters
-kp_heading = 0.004  # Proportional gain
-ki_heading = 0.000  # Integral gain
-kd_heading = 0.000 # Derivative gain
+kp_heading = 0.002  # Proportional gain
+ki_heading = 0.0005 # Integral gain
+kd_heading = 0.001  # Derivative gain
 
-kp_target = 0.002  # Proportional gain
-ki_target = 0.0005  # Integral gain
-kd_target = 0.001 # Derivative gain
+kp_target = 0.004   # Proportional gain
+ki_target = 0.000   # Integral gain
+kd_target = 0.000   # Derivative gain
 
 kp_linear = 0.002  # Proportional gain
 ki_linear = 0.000  # Integral gain
