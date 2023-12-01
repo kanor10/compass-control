@@ -10,6 +10,7 @@ LINEAR_COMMAND = 0.7  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
 LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
+WAYPOINT_TOLERANCE = 0.002  # kilometers
 
 class BoxBot:
     """
@@ -150,7 +151,7 @@ class BoxBot:
             control_output = pid.calculate(desired_heading, actual_heading)
             await boxbot.drive(drive_speed, control_output)
 
-            if distance<0.002:
+            if distance < WAYPOINT_TOLERANCE:
                 print("here")
                 return data
             
@@ -190,16 +191,16 @@ class BoxBot:
 
         return compass_bearing, distance
 
-    async def gotopoint(self, boxbot,gps,pid,xsens,latD,longD,data):
+    async def gotopoint(self, boxbot,gps,pid_heading, pid_target,xsens,latD,longD,data):
         """
         This calls setheading and gotocoord together, such that the robot can be requested to turn
         and go to the correct GPS point.
         """
         #face target 1 and settle
-        await boxbot.setheading(boxbot, pid, xsens, gps, latD, longD)
+        await boxbot.setheading(boxbot, pid_heading, xsens, gps, latD, longD)
 
         #goto target 1 and stop when reached
-        await boxbot.goto_coord(boxbot, pid, xsens, gps, LINEAR_COMMAND, latD, longD,data)
+        await boxbot.goto_coord(boxbot, pid_target, xsens, gps, LINEAR_COMMAND, latD, longD,data)
 
         await boxbot.base.stop()
 

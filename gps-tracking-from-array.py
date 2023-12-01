@@ -10,9 +10,13 @@ from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
 # PID parameters
-kp = 0.004  # Proportional gain
-ki = 0.000  # Integral gain
-kd = 0.00 # Derivative gain
+kp_heading = 0.004  # Proportional gain
+ki_heading = 0.000  # Integral gain
+kd_heading = 0.000 # Derivative gain
+
+kp_target = 0.002  # Proportional gain
+ki_target = 0.0005  # Integral gain
+kd_target = 0.001 # Derivative gain
 
 # Integral term saturation limits
 integral_max = 150  # Adjust as needed
@@ -59,14 +63,15 @@ def extract_coordinates_from_csv(file_path):
 
 async def main():
 #################
-    # pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
+    # pid_heading = PIDController(kp, ki, kd, integral_max, integral_min)
     # boxbot = BoxBot()
-    # await boxbot.setheading(pid_angular)
+    # await boxbot.setheading(pid_heading)
 #################
 
     robot = await connect()
     xsens = MovementSensor.from_robot(robot, "imu")
-    pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
+    pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max, integral_min)
+    pid_target = PIDController(kp_target, ki_target, kd_target, integral_max, integral_min)
     boxbot = BoxBot(robot)
     gps = MovementSensor.from_robot(robot, "gps")
     data=[]
@@ -79,7 +84,7 @@ async def main():
         print(x[0])
         print(", ")
         print(x[1])
-        await boxbot.gotopoint(boxbot,gps,pid_angular,xsens,x[0],x[1],data)
+        await boxbot.gotopoint(boxbot,gps,pid_heading, pid_target,xsens,x[0],x[1],data)
 
     print(data)
 
