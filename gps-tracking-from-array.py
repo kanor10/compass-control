@@ -65,7 +65,7 @@ async def main():
 #################
 
     robot = await connect()
-    xsens = MovementSensor.from_robot(robot, "gps")
+    xsens = MovementSensor.from_robot(robot, "imu")
     pid_angular = PIDController(kp, ki, kd, integral_max, integral_min)
     boxbot = BoxBot(robot)
     gps = MovementSensor.from_robot(robot, "gps")
