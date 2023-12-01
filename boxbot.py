@@ -197,13 +197,13 @@ class BoxBot:
         This calls setheading and gotocoord together, such that the robot can be requested to turn
         and go to the correct GPS point.
         """
-        #face target 1 and settle
-        await boxbot.setheading(boxbot, pid_heading, xsens, gps, latD, longD)
+        try:
+            await boxbot.setheading(boxbot, pid_heading, xsens, gps, latD, longD)
+            await boxbot.goto_coord(boxbot, pid_target, pid_linear, xsens, gps, latD, longD,data)
+            await boxbot.base.stop()
 
-        #goto target 1 and stop when reached
-        await boxbot.goto_coord(boxbot, pid_target, pid_linear, xsens, gps, latD, longD,data)
-
-        await boxbot.base.stop()
+        except:
+            await boxbot.base.stop()
 
 class PIDController:
     """
