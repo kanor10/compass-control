@@ -10,7 +10,7 @@ from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
 # PID parameters
-kp_heading = 0.002  # Proportional gain
+kp_heading = 0.004  # Proportional gain
 ki_heading = 0.0005 # Integral gain
 kd_heading = 0.001  # Derivative gain
 
@@ -19,7 +19,7 @@ ki_target = 0.000   # Integral gain
 kd_target = 0.000   # Derivative gain
 
 kp_linear = 0.002  # Proportional gain
-ki_linear = 0.000  # Integral gain
+ki_linear = 0.002  # Integral gain
 kd_linear = 0.000 # Derivative gain
 
 # Integral term saturation limits
@@ -30,7 +30,7 @@ integral_max_target = 150  # Adjust as needed
 integral_min_target = -150  # Adjust as needed
 
 integral_max_linear = 150  # Adjust as needed
-integral_min_linear = -150  # Adjust as needed
+integral_min_linear = 0  # Adjust as needed
 
 async def connect():
     # Load environment variables

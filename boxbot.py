@@ -6,7 +6,7 @@ LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
 HEADING_OFFEST = -100
 HEADING_TOLERANCE = 5  # degrees
-LINEAR_COMMAND = 0.7  # fractional power
+LINEAR_COMMAND = 0.3  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
 LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
@@ -149,8 +149,9 @@ class BoxBot:
 
             #calculate the control output for heading compensation and set forward power
             control_output_angular = pid_angular.calculate(desired_heading, actual_heading)
-            control_output_linear = pid_linear.calculate(0, distance)
-            await boxbot.drive(LINEAR_COMMAND, control_output_angular)
+            print(f"Distance: {distance}")
+            control_output_linear = pid_linear.calculate(0, distance*-1000)
+            await boxbot.drive(control_output_linear, control_output_angular)
 
             if distance < WAYPOINT_TOLERANCE:
                 print("here")
