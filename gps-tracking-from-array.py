@@ -9,17 +9,20 @@ from boxbot import PIDController
 from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
+start_time = time.time()
+
+
 # PID parameters
-kp_heading = 0.004  # Proportional gain
-ki_heading = 0.0005 # Integral gain
-kd_heading = 0.001  # Derivative gain
+kp_heading = 0.005  # Proportional gain
+ki_heading = 0.002 # Integral gain
+kd_heading = 0.002  # Derivative gain
 
 kp_target = 0.004   # Proportional gain
 ki_target = 0.000   # Integral gain
 kd_target = 0.000   # Derivative gain
 
 kp_linear = 0.002  # Proportional gain
-ki_linear = 0.002  # Integral gain
+ki_linear = 0.001  # Integral gain
 kd_linear = 0.000 # Derivative gain
 
 # Integral term saturation limits
@@ -31,6 +34,10 @@ integral_min_target = -150  # Adjust as needed
 
 integral_max_linear = 150  # Adjust as needed
 integral_min_linear = 0  # Adjust as needed
+
+def get_output_filename(input_filename):
+    name, ext = os.path.splitext(input_filename)
+    return f"{name}_tracked{ext}"
 
 async def connect():
     # Load environment variables
@@ -68,6 +75,7 @@ def extract_coordinates_from_csv(file_path):
                 latitude = float(row[1])
                 longitude = float(row[2])
                 coordinates.append([latitude, longitude])
+                print(latitude,longitude)
 
     return coordinates
 
@@ -98,13 +106,18 @@ async def main():
         await boxbot.gotopoint(boxbot,gps,pid_heading, pid_target, pid_linear,xsens,x[0],x[1],data)
 
     print(data)
-
-    with open("raster5", 'w', newline='') as csvfile:
+    pid_heading.print_Log("log/headinglog.csv")
+    pid_target.print_Log("log/target.csv")
+    pid_linear.print_Log("log/linear.csv")
+    output_FileName = get_output_filename(os.environ.get('ENV_FILEPATH'))
+    with open(output_FileName, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
         csv_writer.writerow(['lat', 'long'])
         csv_writer.writerows(data)
+    print("--- %s seconds ---" % (time.time() - start_time))
                     
 
 
 if __name__ == '__main__':
     asyncio.run(main())
+

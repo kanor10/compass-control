@@ -1,16 +1,18 @@
 import time
 import math
+import numpy as np
+import csv
 from viam.components.base import Base, Vector3
 
 LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
-HEADING_OFFEST = -100
+HEADING_OFFEST = 0
 HEADING_TOLERANCE = 5  # degrees
 LINEAR_COMMAND = 0.3  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
 LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
-WAYPOINT_TOLERANCE = 0.002  # kilometers
+WAYPOINT_TOLERANCE = 0.0025  # kilometers
 
 class BoxBot:
     """
@@ -134,7 +136,9 @@ class BoxBot:
             desired_heading, distance = heading_distance
 
             # Read in heading
+
             raw_heading = await xsens.get_compass_heading() + HEADING_OFFEST
+
             # Adjust heading to be within the desired range (0-360 degrees)
             actual_heading = (raw_heading) % 360
 
@@ -220,11 +224,11 @@ class PIDController:
         self.integral = 0
         self.previous_error = 0
         self.previous_calc_time = 0
+        self.pid_log = np.zeros(1,4)
 
     def calculate(self, desired_value, current_value):
         error = desired_value - current_value
         error_slope = 0
-        
         # Anti-windup: Limit the integral term to prevent excessive accumulation
         if(self.previous_calc_time != 0):
         #     time_step = time.time() - self.previous_calc_time
@@ -241,7 +245,7 @@ class PIDController:
         p_component = self.kp * error
         i_component = self.ki * self.integral
         d_component = self.kd * error_slope
-
+        self.pid_log.append([time.time(),p_component,i_component,d_component])
         control_output = p_component + i_component + d_component
 
         # Print the PID components with three decimal places
@@ -262,3 +266,11 @@ class PIDController:
         # self.previous_error = error
 
         return control_output
+    def print_Log(self, name):
+        with open(name, mode='w', newline='') as file:
+            writer = csv.writer(file)
+            # Write the header
+            writer.writerow(['Time', 'P', 'I', 'D'])
+            for i in self.pid_log:
+                writer.writerow(i)
+            

@@ -10,7 +10,7 @@ def get_output_filename(input_filename):
 # Function to extract numbers from a line
 def extract_numbers(line):
     numbers = re.findall(r"[-+]?\d*\.\d+|\d+", line)
-    return numbers[:2]  # Return only the first two numbers
+    return numbers[:3]  # Return only the first three numbers
 
 # Check if an input file name was provided
 if len(sys.argv) < 2:
@@ -26,8 +26,8 @@ output_file_name = get_output_filename(input_file)
 # Open the source file and create a new file for the output
 with open(input_file, 'r') as source_file, open(output_file_name, 'w') as output_file:
     for line in source_file:
-        if line.startswith('Coordinates:'):
-            first_number, second_number = extract_numbers(line)
-            output_file.write(f"{first_number}, {second_number}\n")
+        if not(line.startswith('timestamp')):
+            first_number, second_number, third_number = extract_numbers(line)
+            output_file.write(f"{second_number}, {third_number}\n")
 
 print("Processing complete.")
