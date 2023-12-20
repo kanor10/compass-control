@@ -12,6 +12,18 @@ LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
 WAYPOINT_TOLERANCE = 0.002  # kilometers
 STEER_ANGLE_MAX = 55  # degrees
+STEERING_FILTER_ALPHA = 0.5  # smoothing factor for steering angle
+
+def low_pass_filter(new_value, prev_filtered_value, alpha=0.5):
+    """
+    Apply a low-pass filter to the new_value.
+    :param new_value: The current raw value.
+    :param prev_filtered_value: The previously filtered value.
+    :param alpha: Smoothing factor, between 0 and 1. A higher alpha gives more weight to the new value.
+    :return: Filtered value.
+    """
+    return alpha * new_value + (1 - alpha) * prev_filtered_value
+
 
 class AckermannBot:
     """
@@ -103,6 +115,7 @@ class AckermannBot:
         is broken. There is some commented out logic that will give some additional settling time
         if needed - although this is not neccessary.
         """
+        filtered_steering_angle = 0
 
         while True:
             start_time = time.time()
@@ -125,8 +138,11 @@ class AckermannBot:
             # Determine steering angle needed to reach target and convert to a decimal percentage
             # TODO: Add handling for target not being reachable due to minimum turning radius
             # TODO: Improve handling for angles greater than the maximum
-            steering_angle = await robot.calculate_steering_angle(robot, actual_heading, latitude_current, longitude_current, latitude_target, longitude_target)
-            steering_angle = steering_angle / STEER_ANGLE_MAX
+            steering_angle_raw = await robot.calculate_steering_angle(robot, actual_heading, latitude_current, longitude_current, latitude_target, longitude_target)
+            steering_angle_raw /= STEER_ANGLE_MAX
+            steering_angle = low_pass_filter(steering_angle_raw, filtered_steering_angle, STEERING_FILTER_ALPHA)
+            filtered_steering_angle = steering_angle
+
             distance = await robot.calculate_distance(latitude_current, longitude_current, latitude_target, longitude_target)
 
             print(f"Steer Angle: {steering_angle*STEER_ANGLE_MAX:07.3f}, Distance: {distance:07.3f}")
