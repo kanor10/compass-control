@@ -65,8 +65,8 @@ class AckermannBot:
         """
         Calculate the distance between two GPS coordinates.
         """
-        delta_latitude = math.radians(target_lat - current_lat)
-        delta_longitude = math.radians(target_lon - current_lon)
+        delta_latitude = math.radians(target_lat) - math.radians(current_lat)
+        delta_longitude = math.radians(target_lon) - math.radians(current_lon)
 
         # Calculate distance using Haversine formula
         a = (math.sin(delta_latitude/2)**2) + math.cos(current_lat) * math.cos(target_lat) * (math.sin(delta_longitude/2)**2)
