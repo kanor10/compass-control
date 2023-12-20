@@ -1,7 +1,7 @@
 import asyncio
-import datetime
 import csv
 import os
+from datetime import datetime
 from dotenv import load_dotenv
 from boxbot import BoxBot, AckermannBot
 from boxbot import PIDController
@@ -76,7 +76,8 @@ async def main():
 
     robot = await connect()
     sensor_motion = MovementSensor.from_robot(robot, "imu")
-    sensor_gps = MovementSensor.from_robot(robot, "gpsRight")
+    sensor_gps_right = MovementSensor.from_robot(robot, "gpsRight")
+    sensor_gps_left = MovementSensor.from_robot(robot, "gpsLeft")
 
     replay_file = os.environ.get('ENV_FILEPATH')
     GPSarray = extract_coordinates_from_csv(replay_file)
@@ -85,7 +86,7 @@ async def main():
 
     for coords in GPSarray:
         print(f"Going to {coords[0]}, {coords[1]}")
-        coord_log = ackermann_bot.navigate(sensor_motion, sensor_gps, coords[0], coords[1])
+        await ackermann_bot.navigate(ackermann_bot, sensor_motion, sensor_gps_right, sensor_gps_left, coords[0], coords[1], coord_log)
 
 
     # pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max_heading, integral_min_heading)
@@ -102,7 +103,7 @@ async def main():
 
     print(coord_log)
 
-    log_file_name = f'gpsLog_{current_time}.log'
+    log_file_name = f'logs/gpsLog_{current_time}.log'
     os.makedirs(os.path.dirname(log_file_name), exist_ok=True)
 
     with open(log_file_name, 'w', newline='') as csvfile:
