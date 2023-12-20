@@ -1,10 +1,9 @@
 import asyncio
-import time
-import math
+import datetime
 import csv
 import os
 from dotenv import load_dotenv
-from boxbot import BoxBot
+from boxbot import BoxBot, AckermannBot
 from boxbot import PIDController
 from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
@@ -72,37 +71,44 @@ def extract_coordinates_from_csv(file_path):
     return coordinates
 
 async def main():
-#################
-    # pid_heading = PIDController(kp, ki, kd, integral_max, integral_min)
-    # boxbot = BoxBot()
-    # await boxbot.setheading(pid_heading)
-#################
+    coord_log = []
+    current_time = datetime.now().strftime("%Y%m%d_%H-%M-%S")
 
     robot = await connect()
-    xsens = MovementSensor.from_robot(robot, "imu")
-    pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max_heading, integral_min_heading)
-    pid_target = PIDController(kp_target, ki_target, kd_target, integral_max_target, integral_min_target)
-    pid_linear = PIDController(kp_linear, ki_linear, kd_linear, integral_max_linear, integral_min_linear)
-    boxbot = BoxBot(robot)
-    gps = MovementSensor.from_robot(robot, "gps")
-    data=[]
+    sensor_motion = MovementSensor.from_robot(robot, "imu")
+    sensor_gps = MovementSensor.from_robot(robot, "gpsRight")
 
     replay_file = os.environ.get('ENV_FILEPATH')
     GPSarray = extract_coordinates_from_csv(replay_file)
 
-    for x in GPSarray:
-        print('next point: ')
-        print(x[0])
-        print(", ")
-        print(x[1])
-        await boxbot.gotopoint(boxbot,gps,pid_heading, pid_target, pid_linear,xsens,x[0],x[1],data)
+    ackermann_bot = AckermannBot(robot)
 
-    print(data)
+    for coords in GPSarray:
+        print(f"Going to {coords[0]}, {coords[1]}")
+        coord_log = ackermann_bot.navigate(sensor_motion, sensor_gps, coords[0], coords[1])
 
-    with open("raster5", 'w', newline='') as csvfile:
+
+    # pid_heading = PIDController(kp_heading, ki_heading, kd_heading, integral_max_heading, integral_min_heading)
+    # pid_target = PIDController(kp_target, ki_target, kd_target, integral_max_target, integral_min_target)
+    # pid_linear = PIDController(kp_linear, ki_linear, kd_linear, integral_max_linear, integral_min_linear)
+    # boxbot = BoxBot(robot)
+    #
+    # for x in GPSarray:
+    #     print('next point: ')
+    #     print(x[0])
+    #     print(", ")
+    #     print(x[1])
+    #     await boxbot.gotopoint(boxbot,sensor_gps,pid_heading, pid_target, pid_linear,sensor_motion,x[0],x[1],coord_log)
+
+    print(coord_log)
+
+    log_file_name = f'gpsLog_{current_time}.log'
+    os.makedirs(os.path.dirname(log_file_name), exist_ok=True)
+
+    with open(log_file_name, 'w', newline='') as csvfile:
         csv_writer = csv.writer(csvfile)
-        csv_writer.writerow(['lat', 'long'])
-        csv_writer.writerows(data)
+        csv_writer.writerow(['latitude', 'longitude'])
+        csv_writer.writerows(coord_log)
                     
 
 
