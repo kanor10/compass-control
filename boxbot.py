@@ -6,13 +6,173 @@ from viam.components.base import Base, Vector3
 
 LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
-HEADING_OFFEST = 0
+HEADING_OFFEST = 0  # degrees
 HEADING_TOLERANCE = 5  # degrees
 LINEAR_COMMAND = 0.3  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
 LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
-WAYPOINT_TOLERANCE = 0.0025  # kilometers
+WAYPOINT_TOLERANCE = 0.002  # kilometers
+STEER_ANGLE_MAX = 55  # degrees
+STEERING_ANGLE_OFFSET = -5  # offset steering commands by this many degrees
+STEERING_FILTER_ALPHA = 1.0  # smoothing factor for steering angle
+
+def low_pass_filter(new_value, prev_filtered_value, alpha=0.5):
+    """
+    Apply a low-pass filter to the new_value.
+    :param new_value: The current raw value.
+    :param prev_filtered_value: The previously filtered value.
+    :param alpha: Smoothing factor, between 0 and 1. A higher alpha gives more weight to the new value.
+    :return: Filtered value.
+    """
+    return alpha * new_value + (1 - alpha) * prev_filtered_value
+
+
+class AckermannBot:
+    """
+    An **AckermannBot** class (for a four wheeled, ackermann steering robot) which contains the main
+    functions for GPS waypoint navigation of a robot using a compass.
+    """
+    def __init__(self, robot):
+        self.base = Base.from_robot(robot,"intermode-base")
+
+    async def drive(self, robot, linear_command, angular_command):
+        """
+        This method sets the base's power.
+        """
+        # Limit both commands to the range of -max to max
+        linear_command = max(min(linear_command, LINEAR_COMMAND_MAX), -LINEAR_COMMAND_MAX)
+        angular_command = max(min(angular_command, ANGULAR_COMMAND_MAX), -ANGULAR_COMMAND_MAX)
+        
+        print(f"Linear: {linear_command}, Angular: {angular_command}")
+
+        linearVec = Vector3(x=0.0, y=linear_command, z=0.0)
+        angularVec = Vector3(x=0.0, y=0.0, z=angular_command)
+        await robot.base.set_power(linearVec, angularVec)
+
+    def calculate_heading(self, lat1, lon1, lat2, lon2):
+        """
+        Calculates the heading from one GPS coordinate to another.
+        """
+        # Convert latitude and longitude from degrees to radians
+        lat1 = math.radians(lat1)
+        lon1 = math.radians(lon1)
+        lat2 = math.radians(lat2)
+        lon2 = math.radians(lon2)
+
+        # Calculate the difference in latitude and longitude
+        dlon = lon2 - lon1
+
+        # Calculate the initial bearing
+        y = math.sin(dlon) * math.cos(lat2)
+        x = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(dlon)
+        initial_bearing = math.atan2(y, x)
+
+        # Convert the initial bearing to degrees
+        initial_bearing = math.degrees(initial_bearing)
+
+        # Normalize the initial bearing to the range [0, 360] degrees
+        compass_bearing = (initial_bearing + 360) % 360
+
+        return compass_bearing
+    
+    async def calculate_distance(self, current_lat, current_lon, target_lat, target_lon):
+        """
+        Calculate the distance between two GPS coordinates.
+        """
+        current_lat = math.radians(current_lat)
+        current_lon = math.radians(current_lon)
+        target_lat = math.radians(target_lat)
+        target_lon = math.radians(target_lon)
+
+        delta_latitude = target_lat - current_lat
+        delta_longitude = target_lon - current_lon
+
+        # Calculate distance using Haversine formula
+        a = (math.sin(delta_latitude/2)**2) + math.cos(current_lat) * math.cos(target_lat) * (math.sin(delta_longitude/2)**2)
+        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+        distance = 6371 * c  # Earth's radius in kilometers
+        return distance
+
+    async def calculate_steering_angle(self, robot, current_heading, current_lat, current_lon, target_lat, target_lon):
+        """
+        Calculate the steering angle required to orient the robot towards the target position.
+        """
+        target_bearing = robot.calculate_heading(current_lat, current_lon, target_lat, target_lon)
+        steering_angle = target_bearing - current_heading
+        steering_angle *= -1  # Flip because heading is positive in the opposite direction to steering
+
+        # Normalize steering angle to -180 to 180
+        if steering_angle > 180:
+            steering_angle -= 360
+        elif steering_angle < -180:
+            steering_angle += 360
+
+        # Offset steering angle to account for homing error
+        steering_angle += STEERING_ANGLE_OFFSET
+        # Limit angle to maximum steering angle
+        steering_angle = max(-STEER_ANGLE_MAX, min(STEER_ANGLE_MAX, steering_angle))
+
+        print(f"Target Heading: {target_bearing:07.3f}, Current Heading: {current_heading:07.3f}, Steering Angle: {steering_angle:07.3f}")
+
+        return steering_angle
+    
+    async def navigate(self, robot, sensor_motion, sensor_gps_right, sensor_gps_left, latitude_target, longitude_target, coord_log):
+        """
+        This method is used to enter a control loop and turn the robot (this is implementation uses
+        differential steering). This loop will run so that the heading error is constantly being
+        measured and corrected. When the heading is reached (within 5 degrees), this control loop
+        is broken. There is some commented out logic that will give some additional settling time
+        if needed - although this is not neccessary.
+        """
+        filtered_steering_angle = 0
+
+        while True:
+            start_time = time.time()
+
+            # Read in heading
+            raw_heading = await sensor_motion.get_compass_heading() + HEADING_OFFEST
+            # Adjust heading to be within the desired range (0-360 degrees)
+            actual_heading = (raw_heading) % 360
+
+            coords_right = await sensor_gps_right.get_position()
+            coords_left = await sensor_gps_left.get_position()
+            latitude_current = (coords_right[0].latitude + coords_left[0].latitude)/2
+            longitude_current = (coords_right[0].longitude + coords_left[0].longitude)/2
+
+            gps_distance = await robot.calculate_distance(coords_right[0].latitude, coords_right[0].longitude, coords_left[0].latitude, coords_left[0].longitude)
+            print(f"GPS Distance: {gps_distance:09.6f}")
+            print(f"Coordinates: {latitude_current}, {longitude_current}, {actual_heading}")
+            coord_log.append([latitude_current, longitude_current])
+
+            # Determine steering angle needed to reach target and convert to a decimal percentage
+            # TODO: Add handling for target not being reachable due to minimum turning radius
+            # TODO: Improve handling for angles greater than the maximum
+            steering_angle_raw = await robot.calculate_steering_angle(robot, actual_heading, latitude_current, longitude_current, latitude_target, longitude_target)
+            steering_angle_raw /= STEER_ANGLE_MAX
+            steering_angle = low_pass_filter(steering_angle_raw, filtered_steering_angle, STEERING_FILTER_ALPHA)
+            filtered_steering_angle = steering_angle
+
+            distance = await robot.calculate_distance(latitude_current, longitude_current, latitude_target, longitude_target)
+
+            print(f"Steer Angle: {steering_angle*STEER_ANGLE_MAX:07.3f}, Distance: {distance:07.3f}")
+
+            # Move to target
+            # TODO: Make linear command more dynamic
+            await robot.drive(robot, LINEAR_COMMAND, steering_angle)
+            
+            # Stop spinning once the desired heading is reached
+            if abs(distance) < WAYPOINT_TOLERANCE:
+                print("Target coordinates reached")
+                break
+
+            time.sleep(max(start_time + LOOP_PERIOD - time.time(), 0))
+
+        await robot.base.stop()
+
+        return coord_log
+
+
 
 class BoxBot:
     """
