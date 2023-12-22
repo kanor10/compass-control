@@ -8,8 +8,6 @@ from boxbot import PIDController
 from viam.robot.client import RobotClient
 from viam.components.movement_sensor import MovementSensor
 
-start_time = time.time()
-
 
 # PID parameters
 kp_heading = 0.005  # Proportional gain
@@ -70,9 +68,9 @@ def extract_coordinates_from_csv(file_path):
         csv_reader = csv.reader(file)
         next(csv_reader)  # Skip the header row
         for row in csv_reader:
-            if len(row) >= 3:
-                latitude = float(row[1])
-                longitude = float(row[2])
+            if len(row) >= 2:
+                latitude = float(row[0])
+                longitude = float(row[1])
                 coordinates.append([latitude, longitude])
                 print(latitude,longitude)
 
@@ -111,7 +109,7 @@ async def main():
 
     print(coord_log)
 
-    log_file_name = f'logs/gpsLog_{current_time}.log'
+    log_file_name = f'logs/{replay_file}_gpsLog_{current_time}.log'
     os.makedirs(os.path.dirname(log_file_name), exist_ok=True)
 
     with open(log_file_name, 'w', newline='') as csvfile:

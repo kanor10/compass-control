@@ -1,4 +1,6 @@
 *.pyc
 *.env
 raster5
-.csv
+*.csv
+*.log
+*.png

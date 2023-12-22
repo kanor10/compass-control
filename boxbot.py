@@ -7,12 +7,12 @@ from viam.components.base import Base, Vector3
 LOOP_PERIOD = 0.2  # seconds
 PRINT_PERIOD = 1  # seconds
 HEADING_OFFEST = 0  # degrees
-HEADING_TOLERANCE = 5  # degrees
+HEADING_TOLERANCE = 3  # degrees
 LINEAR_COMMAND = 0.3  # fractional power
 LINEAR_COMMAND_MINTURN = 0.2  # fractional power to enforce minimum turn radius
 LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
-WAYPOINT_TOLERANCE = 0.002  # kilometers
+WAYPOINT_TOLERANCE = 0.001  # kilometers
 STEER_ANGLE_MAX = 55  # degrees
 STEERING_ANGLE_OFFSET = -5  # offset steering commands by this many degrees
 STEERING_FILTER_ALPHA = 1.0  # smoothing factor for steering angle
@@ -138,7 +138,7 @@ class AckermannBot:
             coords_right = await sensor_gps_right.get_position()
             coords_left = await sensor_gps_left.get_position()
             latitude_current = (coords_right[0].latitude + coords_left[0].latitude)/2
-            longitude_current = (coords_right[0].longitude + coords_left[0].longitude)/2
+            longitude_current = -0.000005 + (coords_right[0].longitude + coords_left[0].longitude)/2
 
             gps_distance = await robot.calculate_distance(coords_right[0].latitude, coords_right[0].longitude, coords_left[0].latitude, coords_left[0].longitude)
             print(f"GPS Distance: {gps_distance:09.6f}")
