@@ -12,7 +12,8 @@ LINEAR_COMMAND_MAX = 1.0  # fractional power to enforce maximum speed
 ANGULAR_COMMAND_MAX = 0.5  # fractional power to enforce maximum spin speed
 WAYPOINT_TOLERANCE = 0.002  # kilometers
 STEER_ANGLE_MAX = 55  # degrees
-STEERING_FILTER_ALPHA = 0.5  # smoothing factor for steering angle
+STEERING_ANGLE_OFFSET = -5  # offset steering commands by this many degrees
+STEERING_FILTER_ALPHA = 1.0  # smoothing factor for steering angle
 
 def low_pass_filter(new_value, prev_filtered_value, alpha=0.5):
     """
@@ -105,6 +106,8 @@ class AckermannBot:
         elif steering_angle < -180:
             steering_angle += 360
 
+        # Offset steering angle to account for homing error
+        steering_angle += STEERING_ANGLE_OFFSET
         # Limit angle to maximum steering angle
         steering_angle = max(-STEER_ANGLE_MAX, min(STEER_ANGLE_MAX, steering_angle))
 
