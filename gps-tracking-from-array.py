@@ -75,7 +75,7 @@ async def main():
     current_time = datetime.now().strftime("%Y%m%d_%H-%M-%S")
 
     robot = await connect()
-    sensor_motion = MovementSensor.from_robot(robot, "imu")
+    sensor_motion = MovementSensor.from_robot(robot, "gpsRight")
     sensor_gps_right = MovementSensor.from_robot(robot, "gpsRight")
     sensor_gps_left = MovementSensor.from_robot(robot, "gpsLeft")
 
